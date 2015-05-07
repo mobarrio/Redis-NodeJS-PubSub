@@ -1,0 +1,11 @@
+
+.mariano-share:before { content: '\e800'; } /* '' */
+.mariano-exchange:before { content: '\e801'; } /* '' */
+.mariano-shuffle:before { content: '\e802'; } /* '' */
+.mariano-play:before { content: '\e803'; } /* '' */
+.mariano-stop:before { content: '\e804'; } /* '' */
+.mariano-pause:before { content: '\e805'; } /* '' */
+.mariano-emo-devil:before { content: '\e806'; } /* '' */
+.mariano-videocam:before { content: '\e807'; } /* '' */
+.mariano-trash-empty:before { content: '\e808'; } /* '' */
+.mariano-trash:before { content: '\e809'; } /* '' */

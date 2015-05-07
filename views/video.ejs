@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<!--[if IE 8]> <html lang="es" class="ie8"> <![endif]-->  
+<!--[if IE 9]> <html lang="es" class="ie9"> <![endif]-->  
+<!--[if !IE]><!--> <html lang="es"> <!--<![endif]-->  
+<html>
+	<head>
+	    <!-- META DATA -->
+	    <meta charset="utf-8">
+	    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+	    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimum-scale=1.0, maximum-scale=1.0">
+	    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+	    <meta name="HandheldFriendly" content="true">
+	    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+	</head>
+	<body>
+		<div class="framevideos" style="padding: 0;">
+			<iframe id="video" title="YouTube video player" width="100%" height="100%" src="" frameborder="0" allowfullscreen></iframe>
+		</div>
+	    <!-- JS Libs -->
+	    <!-- script src="https://cdn.socket.io/socket.io-1.2.0.js"></script -->
+	    <script src="http://code.jquery.com/jquery-latest.min.js"></script>
+	    <script src="/socket.io/socket.io.js"></script>
+	    <!--[if lt IE 9]>
+	    <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	    <![endif]-->
+	    <script type="text/javascript" src="http://www.youtube.com/player_api"></script>
+		<script type="text/javascript">
+			var debug = true;
+			var socket = io.connect('http://127.0.0.1:3000/');
+			var player;
+			socket.on('connect', function(data){
+				socket.on('video-p<%= videoid %>', function(data) {
+			        var msg = JSON.parse(data);
+					var reply = "";
+					switch(msg.action) {
+					  case 'load':
+					    changeVideo(msg.destino, msg.videoid);
+					    break;
+
+					  case 'play':
+					    document.getElementById('video').contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+					    break;
+
+					  case 'remove':
+					    document.getElementById('video').src = '';
+					    break;
+
+					  case 'pause':
+					  case 'stop':
+					    document.getElementById('video').contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
+					    break;
+					}
+				});
+
+				socket.on('disconnect', function () {
+				    if(debug) console.log('disconnect');
+				});				
+			});
+
+			function onYouTubePlayerAPIReady() {player = new YT.Player('player');}    				
+
+			function changeVideo(destino,videoid){
+				var $hock = $(".framevideos iframe").parent();
+				$(".framevideos iframe").remove();
+				$('<iframe id="video" width="100%" height="100%" frameborder="0"></iframe>')
+				    .attr("src", "http://www.youtube.com/embed/" + videoid + "?autoplay=1&enablejsapi=1")
+				    .appendTo($hock).promise().done(function(){
+        				$('#video').css({ width: $(window).innerWidth() + 'px', height: $(window).innerHeight() + 'px' });
+    				});
+			}
+
+			function DoFullScreen() {
+			    var isInFullScreen = (document.fullScreenElement && document.fullScreenElement !==     null) || (document.mozFullScreen || document.webkitIsFullScreen);
+			    var docElm = document.documentElement;
+			    if (!isInFullScreen) {
+			        if (docElm.requestFullscreen) {
+			            docElm.requestFullscreen();
+			        }
+			        else if (docElm.mozRequestFullScreen) {
+			            docElm.mozRequestFullScreen();
+			            alert("Mozilla entering fullscreen!");
+			        }
+			        else if (docElm.webkitRequestFullScreen) {
+			            docElm.webkitRequestFullScreen();
+			            alert("Webkit entering fullscreen!");
+			        }
+			    }
+			}
+ 			$(document).ready(function(){
+				// DoFullScreen();
+
+				$(window).resize(function(){
+					$('#video').css({ width: $(window).innerWidth() + 'px', height: $(window).innerHeight() + 'px' });
+				});
+			});
+		</script>		
+	</body>
+</html>
+
+

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<!--[if IE 8]> <html lang="es" class="ie8"> <![endif]-->  
+<!--[if IE 9]> <html lang="es" class="ie9"> <![endif]-->  
+<!--[if !IE]><!--> <html lang="es"> <!--<![endif]-->  
+<html>
+	<head>
+	    <!-- META DATA -->
+	    <meta charset="utf-8">
+	    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+	    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimum-scale=1.0, maximum-scale=1.0">
+	    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+	    <meta name="HandheldFriendly" content="true">
+	    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+		<link rel="stylesheet" href="css/animation.css">
+		<link rel="stylesheet" href="css/mariano-webfont.css">
+	    <!--[if IE 7]><link rel="stylesheet" href="css/mariano-webfont-ie7.css"><![endif]-->
+	    <style type="text/css">
+	    #control { float: left;overflow-y: auto;background-color: rgba(128, 128, 128, 0.13);height: 175px;margin-bottom: 1rem;border: 1px solid grey;}
+	    .framevideos { background-color: rgba(255, 0, 0, 0.21);height: 175px;margin-bottom: 1rem;border: 1px solid grey;}
+	    .titulos { text-transform: uppercase;}
+	    #control p {margin: 0;  font-size: 1.2rem;  font-weight: 600;  font-family: monospace;}
+	    </style>
+	</head>
+	<body>
+		<div class="container">
+			<h1>Redis+NodeJS - Publisher & Subsriber</h1>
+			<form id="SendPubli" action="#">
+				<div class="row">
+					<hr>
+				</div>
+				<div class="row">
+					<div class="col-md-4 col-xs-6">
+						<label for="msg">Video ID</label> 
+						<input type="text" class="form-control" id="msg" name="msg" value="XSGBVzeBUbk" placeholder="Mensaje" /> 
+					</div>
+					<div class="col-md-2 col-xs-4">
+						<label for="destino">Destino</label> 
+						<select class="form-control" id="destino">
+							<option value="control">Control</option>
+							<option value="p1">Pantalla 1</option>
+							<option value="p2">Pantalla 2</option>
+							<option value="p3">Pantalla 3</option>
+						</select>
+					</div>
+					<div class="col-md-3 col-xs-3">
+						<div><label for="enviar">Accion</label> </div>
+						<button class="btn btn-default accion" data-accion="VIDEO-LOAD"   title="Cargar nuevo video"><i class="mariano-exchange"></i></button>
+						<button class="btn btn-default accion" data-accion="VIDEO-PLAY"   title="Play video"><i class="mariano-play"></i></button>
+						<button class="btn btn-default accion" data-accion="VIDEO-PAUSE"  title="Pause vide"><i class="mariano-stop"></i></button>
+						<button class="btn btn-default accion" data-accion="VIDEO-REMOVE" title="Borrar Video"><i class="mariano-trash"></i></button>
+					</div>
+			 	</div>
+				<div class="row">
+					<hr>
+				</div>
+			</form>
+			<div class="row">
+				<div class="col-md-3 col-xs-3 titulos"><strong>Pantalla 1</strong></div>
+				<div class="col-md-3 col-xs-3 col-md-offset-1 col-xs-offset-1 titulos"><strong>Pantalla 2</strong></div>
+				<div class="col-md-3 col-xs-3 col-md-offset-1 col-xs-offset-1 titulos"><strong>Pantalla 3</strong></div>
+			</div>
+			<div class="row">
+				<div class="framevideos col-md-3 col-xs-3" style="padding: 0;">
+					<iframe id="video-p1" title="YouTube video player" width="100%" height="100%" src="" frameborder="0"></iframe>
+				</div>
+				<div class="framevideos col-md-3 col-md-offset-1 col-xs-3 col-xs-offset-1 actualyoutube" style="padding: 0;">
+					<iframe id="video-p2" title="YouTube video player" width="100%" height="100%" src="" frameborder="0"></iframe>
+				</div>
+				<div class="framevideos col-md-3 col-md-offset-1 col-xs-3 col-xs-offset-1 actualyoutube" style="padding: 0;">
+					<iframe id="video-p3" title="YouTube video player" width="100%" height="100%" src="" frameborder="0"></iframe>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-md-12 col-xs-12 text-center titulos"><strong>Control</strong></div>
+			</div>
+			<div class="row">
+				<div class="col-md-12 col-xs-12" id='control' name='control'></div>
+			</div>
+		</div>
+	    <!-- JS Libs -->
+	    <!-- script src="https://cdn.socket.io/socket.io-1.2.0.js"></script -->
+	    <script src="http://code.jquery.com/jquery-latest.min.js"></script>
+	    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+	    <script src="/socket.io/socket.io.js"></script>
+	    <!--[if lt IE 9]>
+	    <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	    <![endif]-->
+	    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.10.2/moment-with-locales.min.js"></script>
+		<script type="text/javascript">
+			var debug = true;
+			var socket = io.connect('http://127.0.0.1:3000/');
+			var loginfo = function(msg){
+				$("#control").prepend("<p>"+moment().format("YYYY-MM-DD HH:mm:ss - ")+msg+"</p");
+			}
+
+			var changeVideo = function(destino,videoid){
+				var imgurl = 'http://img.youtube.com/vi/'+videoid+'/0.jpg';
+				var vidurl = 'http://www.youtube.com/embed/' + videoid + '?autoplay=0';
+				var $hock = $(".framevideos iframe#"+destino).parent();
+				$(".framevideos iframe#"+destino).remove();
+				$('<iframe id="'+destino+'" width="100%" height="100%" frameborder="0"></iframe>')
+				    .attr("src", vidurl)
+				    .appendTo($hock);
+			}
+
+			var onReciveData = function(data) {
+		        var msg = JSON.parse(data);
+		        loginfo(data);
+				var reply = "";
+				var elem = "#"+msg.destino;
+				switch(msg.action) {
+				  case 'load':
+				    changeVideo(msg.destino, msg.videoid);
+				    break;
+
+				  case 'remove':
+				  	console.log(".framevideos iframe#"+msg.destino," ",$(".framevideos iframe#"+msg.destino).attr("src",''));
+				  	$(".framevideos iframe#"+msg.destino).attr("src",'');
+				    break;
+				}
+			}
+
+			socket.on('connect', function(data){
+				/* La recepcion de los eventos control y video se correlacionan con los canales de REDIS */
+				socket.on('control', function(data) {
+					var msg = JSON.parse(data);
+					if(debug) console.log("Recepcion de ",data);
+			        loginfo(msg.msg);
+				});
+
+				socket.on('video-p1', onReciveData);
+				socket.on('video-p2', onReciveData);
+				socket.on('video-p3', onReciveData);
+
+				socket.on('disconnect', function () {
+				    if(debug) console.log('disconnect');
+				});				
+			});
+
+			$(document).ready(function(){
+				$(".accion").on("click", function(event){
+					event.preventDefault();
+					event.stopPropagation(); 
+					var accion = $(this).data("accion");
+					var opcion = $("#destino").val();
+				    switch(opcion) {
+						case 'control':
+							mensaje = JSON.stringify({action:'MSG', channel:'control', msg:$("#msg").val(), destino:'control'});
+							if(debug) console.log('Enviado para el canal general: ',mensaje);
+							socket.emit('general', mensaje);
+							break;
+						case 'p1':
+						case 'p2':
+						case 'p3':
+							mensaje = JSON.stringify({action:accion, channel:'video-'+opcion, msg:$("#msg").val(), destino: 'video-'+opcion });
+							if(debug) console.log('Enviado para el canal general: ',mensaje);
+							socket.emit('general', mensaje);
+						break;
+				    }
+				});
+			});
+		</script>		
+	</body>
+</html>
+
+
